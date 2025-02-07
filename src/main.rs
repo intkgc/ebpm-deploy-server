@@ -1,22 +1,20 @@
-use rocket::{form::Form, launch, routes};
+use rocket::fs::TempFile;
+use rocket::launch;
+use rocket::{post, routes};
 
-#[macro_use]
-extern crate rocket;
-
-#[derive(FromForm)]
-struct HelloWorldForm {
-    token: String
+#[post("/upload", data = "<file>")]
+async fn upload(mut file: TempFile<'_>) -> std::io::Result<()> {
+    file.persist_to("uploads/file.txt").await?;
+    Ok(())
 }
 
-#[post("/hello_world", data = "<input>")]
-fn hello_world(input: Form<HelloWorldForm>) -> String {
-    input.token.clone()
-}
 #[launch]
 fn rocket() -> _ {
-    rocket::build().mount("/", routes![]).configure(rocket::Config {
-        address: "0.0.0.0".parse().unwrap(),
-        port: 8814,
-        ..Default::default()
-    })
+    rocket::build()
+        .mount("/", routes![upload])
+        .configure(rocket::Config {
+            address: "0.0.0.0".parse().unwrap(),
+            port: 8814,
+            ..Default::default()
+        })
 }
